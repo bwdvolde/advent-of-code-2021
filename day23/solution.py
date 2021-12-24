@@ -2,7 +2,7 @@ from util.read_file import read_file
 
 lair_cols = [2, 4, 6, 8]
 pod_types = ["A", "B", "C", "D"]
-n_rows = 2
+n_rows = 4
 max_depth = len(lair_cols) ** n_rows
 
 should_occupied_by = {(r + 1, c): pod for r in range(n_rows) for c, pod in zip(lair_cols, pod_types)}
@@ -67,8 +67,10 @@ def calculate_least_energy_required(current_energy, occupied_positions: dict, de
         for potentially_occupied_position, desired_pod in should_occupied_by.items():
             if potentially_occupied_position in occupied_positions:
                 continue
-            above = potentially_occupied_position[0] + 1, potentially_occupied_position[1]
-            if potentially_occupied_position[0] < n_rows and occupied_positions.get(above) != desired_pod:
+            above_positions = [(r, potentially_occupied_position[1]) for r in
+                               range(potentially_occupied_position[0] + 1, n_rows + 1)]
+            if potentially_occupied_position[0] < n_rows and any(
+                    occupied_positions.get(above) != desired_pod for above in above_positions):
                 continue
             for temporary_position in sorted(temporary_positions,
                                              key=lambda p: abs(p[1] - potentially_occupied_position[1])):
@@ -84,8 +86,11 @@ def calculate_least_energy_required(current_energy, occupied_positions: dict, de
 
         for position, desired_pod in should_occupied_by.items():
             pod = occupied_positions.get(position)
-            above = position[0] + 1, position[1]
-            if pod and (pod != desired_pod or (position[0] < n_rows and occupied_positions.get(above) != desired_pod)):
+            above_positions = [(r, position[1]) for r in
+                               range(position[0] + 1, n_rows + 1)]
+
+            if pod and (pod != desired_pod or (position[0] < n_rows and any(
+                    occupied_positions.get(above) != desired_pod for above in above_positions))):
                 for temporary_position in temporary_positions:
                     if can_move_to(position, temporary_position, occupied_positions):
                         energy = energy_required_to_move(position, temporary_position, pod)
@@ -102,35 +107,37 @@ def print_burrow(occupied_positions):
     print("#", end="")
     print("".join([occupied_positions[(0, c)] if (0, c) in occupied_positions else "." for c in range(0, 11)]), end="")
     print("#")
-    print("###", end="")
-    print(occupied_positions.get((1, 2)) if (1, 2) in occupied_positions else ".", end="")
-    print("#", end="")
-    print(occupied_positions.get((1, 4)) if (1, 4) in occupied_positions else ".", end="")
-    print("#", end="")
-    print(occupied_positions.get((1, 6)) if (1, 6) in occupied_positions else ".", end="")
-    print("#", end="")
-    print(occupied_positions.get((1, 8)) if (1, 8) in occupied_positions else ".", end="")
-    print("###")
-    print("  #", end="")
-    print(occupied_positions.get((2, 2)) if (2, 2) in occupied_positions else ".", end="")
-    print("#", end="")
-    print(occupied_positions.get((2, 4)) if (2, 4) in occupied_positions else ".", end="")
-    print("#", end="")
-    print(occupied_positions.get((2, 6)) if (2, 6) in occupied_positions else ".", end="")
-    print("#", end="")
-    print(occupied_positions.get((2, 8)) if (2, 8) in occupied_positions else ".", end="")
-    print("#")
+    for r in range(1, n_rows + 1):
+        print("###", end="")
+        print(occupied_positions.get((r, 2)) if (r, 2) in occupied_positions else ".", end="")
+        print("#", end="")
+        print(occupied_positions.get((r, 4)) if (r, 4) in occupied_positions else ".", end="")
+        print("#", end="")
+        print(occupied_positions.get((r, 6)) if (r, 6) in occupied_positions else ".", end="")
+        print("#", end="")
+        print(occupied_positions.get((r, 8)) if (r, 8) in occupied_positions else ".", end="")
+        print("###")
 
 
 lines = read_file("input.txt")
 occupied_positions = {}
 occupied_positions[(1, 2)] = lines[2][3]
-occupied_positions[(2, 2)] = lines[3][3]
 occupied_positions[(1, 4)] = lines[2][5]
-occupied_positions[(2, 4)] = lines[3][5]
 occupied_positions[(1, 6)] = lines[2][7]
-occupied_positions[(2, 6)] = lines[3][7]
 occupied_positions[(1, 8)] = lines[2][9]
-occupied_positions[(2, 8)] = lines[3][9]
+
+occupied_positions[(4, 2)] = lines[3][3]
+occupied_positions[(4, 4)] = lines[3][5]
+occupied_positions[(4, 6)] = lines[3][7]
+occupied_positions[(4, 8)] = lines[3][9]
+
+occupied_positions[(2, 2)] = "D"
+occupied_positions[(3, 2)] = "D"
+occupied_positions[(2, 4)] = "C"
+occupied_positions[(3, 4)] = "B"
+occupied_positions[(2, 6)] = "B"
+occupied_positions[(3, 6)] = "A"
+occupied_positions[(2, 8)] = "A"
+occupied_positions[(3, 8)] = "C"
 
 print(calculate_least_energy_required(0, occupied_positions, 0))
